@@ -1,4 +1,4 @@
-# SAYZEK Zirvesi - Otomatik Sertifika Üretici 🎓
+# Otomatik Sertifika Üretici 🎓
 
 Bu proje, bir Excel listesindeki katılımcı bilgilerini kullanarak, belirlenmiş bir PDF tasarımı üzerine isimleri otomatik olarak işleyen ve her katılımcı için ayrı bir sertifika üreten bir Python aracıdır.
 
