@@ -1,0 +1,16 @@
+# Çıktı klasörü (Sertifikaların yüklendiği yer)
+sertifikalar/
+
+# Python derleme dosyaları
+__pycache__/
+*.py[cod]
+
+# Sanal ortam (Eğer klasör içinde oluşturursan)
+venv/
+env/
+
+# Veri ve Tasarım dosyaları (Kod dışında kalanlar)
+*.xlsx
+*.xls
+*.pdf
+*.zip
