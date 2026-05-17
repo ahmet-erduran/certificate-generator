@@ -12,8 +12,8 @@ Bu proje, bir Excel listesindeki katılımcı bilgilerini kullanarak, belirlenmi
 ## 📁 Proje Yapısı
 Projenin sağlıklı çalışması için klasör düzeni şu şekilde olmalıdır:
 *   `generate_certificates.py`: Ana uygulama kodu.
-*   `GENEL KURUL FORM (Yanıtlar).xlsx`: Katılımcı listesi (AD ve SOYAD sütunlarını içermelidir).
-*   `Siyah.pdf`: Sertifika şablonu (Tasarım dosyası).
+*   `excel.xlsx`: Katılımcı listesi (AD ve SOYAD sütunlarını içermelidir).
+*   `template.pdf`: Sertifika şablonu (Tasarım dosyası).
 *   `sertifikalar/`: Üretilen sertifikaların kaydedileceği klasör (Otomatik oluşturulur).
 
 ## 🛠️ Kurulum ve Kullanım
