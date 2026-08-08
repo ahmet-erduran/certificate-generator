@@ -1,24 +1,22 @@
 #!/usr/bin/env python3
 """
-SAYZEK Zirvesi - Sertifika Üretici
+Sertifika Üretici - Katılımcı listesinden tek tek sertifika görselleri/PDF'leri üretir.
+Web arayüzünün (app.py) kullandığı motor fonksiyonlarını içerir.
 """
 
 import fitz
 import pandas as pd
-import os, re, sys
+import os
+import re
 from PIL import Image, ImageDraw, ImageFont
 
-# ─── AYARLAR ────────────────────────────────────────────────────────────────
-
-# Dosya adını klasöründekiyle birebir aynı yap (Uzantısı .xlsx olduğundan emin ol)
-EXCEL_FILE = r"GENEL KURUL FORM (Yanıtlar).xlsx"
-TEMPLATE_PDF = r"Siyah.pdf"
-OUTPUT_DIR = "sertifikalar"
-
+# ─── VARSYAYILAN AYARLAR ─────────────────────────────────────────────────────
 DPI = 300
 NAME_FONT_SIZE = 84
 NAME_Y_RATIO = 0.620
+NAME_X_RATIO = 0.5
 NAME_COLOR = (0, 0, 0)
+
 
 # ─── FONT YOLU ──────────────────────────────────────────────────────────────
 
@@ -28,11 +26,13 @@ def find_font():
         r"C:\Windows\Fonts\arial.ttf",
         r"C:\Windows\Fonts\ArialBD.ttf",
         "/usr/share/fonts/truetype/noto/NotoSans-Bold.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
     ]
     for path in candidates:
         if os.path.exists(path):
             return path
-    raise FileNotFoundError("Font bulunamadı! Arial yüklü olmalı.")
+    raise FileNotFoundError("Font bulunamadı! Arial veya benzeri bir font yüklü olmalı.")
 
 
 # ─── İSİM DÜZELTİCİ (TÜRKÇE UYUMLU) ──────────────────────────────────────────
@@ -40,6 +40,8 @@ def find_font():
 
 def fix_turkish_name(name):
     """İsimlerin sadece baş harflerini büyük, kalanını küçük yapar."""
+    if not name or not isinstance(name, str):
+        return ""
     lower_map = {ord("I"): "ı", ord("İ"): "i"}
     upper_map = {ord("i"): "İ", ord("ı"): "I"}
 
@@ -49,7 +51,6 @@ def fix_turkish_name(name):
     for word in words:
         if not word:
             continue
-        # İlk harf Büyük, kalanlar küçük
         first_char = word[0].translate(upper_map).upper()
         rest_chars = word[1:].translate(lower_map).lower()
         fixed_words.append(first_char + rest_chars)
@@ -61,29 +62,49 @@ def fix_turkish_name(name):
 
 
 def safe_filename(name):
-    name = name.strip()
+    name = str(name).strip()
     name = re.sub(r'[\\/*?:"<>|]', "", name)
     return name.replace(" ", "_")
 
 
-def load_participants(excel_path):
-    # Excel dosyasını oku
-    df = pd.read_excel(excel_path)
+def load_participants(excel_path_or_stream, name_col=None, surname_col=None):
+    """Excel veya CSV dosyasından katılımcı listesini yükler."""
+    if isinstance(excel_path_or_stream, str) and excel_path_or_stream.endswith('.csv'):
+        df = pd.read_csv(excel_path_or_stream)
+    else:
+        df = pd.read_excel(excel_path_or_stream)
+
     participants = []
     seen = set()
 
     for _, row in df.iterrows():
-        # Ekran görüntüsündeki sütun isimlerini (AD ve SOYAD) kullanıyoruz
-        ad = str(row["AD"]).strip() if pd.notna(row.get("AD")) else ""
-        soyad = str(row["SOYAD"]).strip() if pd.notna(row.get("SOYAD")) else ""
+        ad = ""
+        soyad = ""
 
-        if not ad and not soyad:
+        if name_col and name_col in row and pd.notna(row[name_col]):
+            ad = str(row[name_col]).strip()
+        elif "AD" in row and pd.notna(row["AD"]):
+            ad = str(row["AD"]).strip()
+        elif "Ad" in row and pd.notna(row["Ad"]):
+            ad = str(row["Ad"]).strip()
+
+        if surname_col and surname_col in row and pd.notna(row[surname_col]):
+            soyad = str(row[surname_col]).strip()
+        elif "SOYAD" in row and pd.notna(row["SOYAD"]):
+            soyad = str(row["SOYAD"]).strip()
+        elif "Soyad" in row and pd.notna(row["Soyad"]):
+            soyad = str(row["Soyad"]).strip()
+
+        # Eğer tek sütunda tam ad varsa (Ad Soyad)
+        if not ad and not soyad and len(df.columns) == 1:
+            full_name = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else ""
+        else:
+            full_name = f"{ad} {soyad}".strip()
+
+        if not full_name:
             continue
 
-        # Ad ve soyadı birleştir ve düzelt
-        full_name = f"{ad} {soyad}".strip()
         clean_name = fix_turkish_name(full_name)
-
         key = clean_name.lower()
         if key in seen:
             continue
@@ -93,56 +114,53 @@ def load_participants(excel_path):
     return participants
 
 
-def generate_certificate(name, output_path, font_path):
-    doc = fitz.open(TEMPLATE_PDF)
+def render_certificate_image(
+    name,
+    template_path_or_bytes,
+    font_path=None,
+    font_size=NAME_FONT_SIZE,
+    y_ratio=NAME_Y_RATIO,
+    x_ratio=NAME_X_RATIO,
+    font_color=NAME_COLOR,
+    align="center",
+    dpi=DPI
+):
+    """Sertifikayı PIL Image nesnesi olarak render eder."""
+    font_path = font_path or find_font()
+
+    if isinstance(template_path_or_bytes, bytes):
+        doc = fitz.open(stream=template_path_or_bytes, filetype="pdf")
+    else:
+        doc = fitz.open(template_path_or_bytes)
+
     page = doc[0]
-    pix = page.get_pixmap(matrix=fitz.Matrix(DPI / 72, DPI / 72), alpha=False)
+    pix = page.get_pixmap(matrix=fitz.Matrix(dpi / 72, dpi / 72), alpha=False)
     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
     doc.close()
 
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype(font_path, NAME_FONT_SIZE)
+    try:
+        font = ImageFont.truetype(font_path, font_size)
+    except Exception:
+        font = ImageFont.load_default()
+
     bbox = draw.textbbox((0, 0), name, font=font)
     tw = bbox[2] - bbox[0]
-    x = (img.width - tw) / 2
-    y = img.height * NAME_Y_RATIO
-    draw.text((x, y), name, fill=NAME_COLOR, font=font)
-    img.save(output_path, format="PDF", resolution=DPI)
+    th = bbox[3] - bbox[1]
 
+    if align == "left":
+        x = img.width * x_ratio
+    elif align == "right":
+        x = (img.width * x_ratio) - tw
+    else:  # center
+        x = (img.width * x_ratio) - (tw / 2)
 
-def main():
-    test_mode = "--test" in sys.argv
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    y = (img.height * y_ratio) - (th / 2)
 
-    try:
-        font_path = find_font()
-        participants = load_participants(EXCEL_FILE)
-    except FileNotFoundError as e:
-        print(f"HATA: {e}")
-        return
-    except Exception as e:
-        print(f"Excel okunurken hata oluştu: {e}")
-        return
+    # Renk formatı kontrolü (hex string veya tuple)
+    if isinstance(font_color, str) and font_color.startswith("#"):
+        font_color = font_color.lstrip("#")
+        font_color = tuple(int(font_color[i:i+2], 16) for i in (0, 2, 4))
 
-    if test_mode:
-        participants = participants[:1]
-        print(f"TEST modu: {participants[0]}")
-    else:
-        print(f"{len(participants)} kişi için işlem başlıyor...")
-
-    errors = []
-    for i, name in enumerate(participants, 1):
-        fname = f"{safe_filename(name)}.pdf"
-        out = os.path.join(OUTPUT_DIR, fname)
-        try:
-            generate_certificate(name, out, font_path)
-            print(f"[{i:3}] {name:<40} Tamam")
-        except Exception as e:
-            errors.append((name, str(e)))
-            print(f"[{i:3}] {name:<40} HATA: {e}")
-
-    print(f"\nSonuç: {len(participants) - len(errors)} başarılı, {len(errors)} hatalı.")
-
-
-if __name__ == "__main__":
-    main()
+    draw.text((x, y), name, fill=font_color, font=font)
+    return img
