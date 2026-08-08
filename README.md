@@ -82,7 +82,7 @@ Katılımcı listesinde sertifika üzerinde yazdırılacak **ad** ve **soyad** b
 | AD | SOYAD |
 | --- | --- |
 | Ali | Yılmaz |
-| Zeynep | Demir |
+| Veli | Yılmaz |
 
 > İstenirse tek sütun halinde tam ad da desteklenmektedir (ör. `Ad` sütunu).
 
