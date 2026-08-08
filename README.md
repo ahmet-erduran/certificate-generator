@@ -22,13 +22,14 @@ PDF sertifika şablonu üzerine katılımcı adlarını otomatik olarak basan, w
 
 ## 📁 Dosya Yapısı
 
-```
+```text
 .
 ├── app.py                     # Web sunucusu (Flask)
 ├── generate_certificates.py   # Sertifika üretim motoru
 ├── templates/
 │   └── index.html             # Web arayüzü (sürükle-bırak düzenleyici)
 └── sertifikalar/             # Üretilen sertifikalar (otomatik oluşturulur)
+
 ```
 
 ---
@@ -36,13 +37,15 @@ PDF sertifika şablonu üzerine katılımcı adlarını otomatik olarak basan, w
 ## 🚀 Kurulum
 
 ### Gereksinimler
-- Python 3.8+
-- pip
+
+* Python 3.8+
+* pip
 
 ### Bağımlılıkları Yükle
 
 ```bash
 pip install -r requirements.txt
+
 ```
 
 ---
@@ -59,6 +62,7 @@ Sunucuyu başlatın:
 
 ```bash
 python app.py
+
 ```
 
 Tarayıcınızda `http://127.0.0.1:5000` adresini açın. Ardından:
@@ -76,7 +80,7 @@ Tarayıcınızda `http://127.0.0.1:5000` adresini açın. Ardından:
 Katılımcı listesinde sertifika üzerinde yazdırılacak **ad** ve **soyad** bilgileri bulunmalıdır.
 
 | AD | SOYAD |
-|---|---|
+| --- | --- |
 | Ali | Yılmaz |
 | Zeynep | Demir |
 
@@ -90,21 +94,35 @@ API uç noktalarını hızlıca doğrulamak için:
 
 ```bash
 python test_app.py
+
 ```
 
 ---
 
 ## 🛠️ Teknik Detaylar
 
-- **Web:** Flask
-- **PDF İşleme:** PyMuPDF (`fitz`)
-- **Görüntü İşleme:** Pillow (PIL)
-- **Veri:** Pandas ve openpyxl
-- **Önizleme Hızı:** Önizleme için 150 DPI, çıktı için 300 DPI kullanılır.
-- **Varsayılan Şablon:** Sunucu dizinindeki `template.pdf` dosyası otomatik olarak kullanılır; yoksa web arayüzünden yüklemeniz gerekir.
+* **Web:** Flask
+* **PDF İşleme:** PyMuPDF (`fitz`)
+* **Görüntü İşleme:** Pillow (PIL)
+* **Veri:** Pandas ve openpyxl
+* **Önizleme Hızı:** Önizleme için 150 DPI, çıktı için 300 DPI kullanılır.
+* **Varsayılan Şablon:** Sunucu dizinindeki `template.pdf` dosyası otomatik olarak kullanılır; yoksa web arayüzünden yüklemeniz gerekir.
 
 ---
 
 ## 📄 Lisans
 
-Bu proje [MIT](LICENSE) lisansı altında yayınlanmaktadır.
+Bu proje [MIT](https://www.google.com/search?q=LICENSE) lisansı altında yayınlanmaktadır.
+
+```
+
+### 🚀 Son Adım (Kaydet ve Gönder)
+
+Yukarıdaki metni `README.md` dosyana yapıştırıp kaydettikten sonra, terminaline dönüp şu üç komutu sırasıyla çalıştır. Çakışma çözülecek ve projen GitHub'a başarıyla gidecek:
+
+```bash
+git add README.md
+git commit -m "Merge conflict çözüldü: Güncel web arayüzü dokümantasyonu korundu"
+git push origin main
+
+```
